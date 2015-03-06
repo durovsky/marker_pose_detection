@@ -1,5 +1,5 @@
 /*********************************************************************************************//**
-* @file simple_heap_lib.cpp
+* @file viewpoint_estimation_lib.h
 *
 * ViewPoint estimator header
 *
@@ -7,7 +7,7 @@
 * Frantisek Durovsky
 * Department of Robotics
 * Technical University Kosice
-* February 2015
+* March 2015
 *
 * All rights reserved.
 *

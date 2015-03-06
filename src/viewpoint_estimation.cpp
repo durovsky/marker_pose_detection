@@ -1,5 +1,5 @@
 /*********************************************************************************************//**
-* @file simple_heap_lib.cpp
+* @file viewpoint_estimation.cpp
 *
 * main ViewPoint Estimator file
 *
