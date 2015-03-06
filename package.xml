@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package>
+  <name>viewpoint_estimation</name>
+  <version>1.0.0</version>
+  <description>The viewpoint_estimation package computes calibration grid pose with respect to camera reference
+               frame. Camera calibration using ROS calibration tool is required </description>
+
+  <maintainer email="durovsky987@gmail.com">durovsky</maintainer>
+  <license>BSD</license>
+
+  <url type="website">http://www.smartroboticsys.eu/?cat=8</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>image_transport </build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>tf</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>message_generation</run_depend>
+  <run_depend>image_transport</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>tf</run_depend>
+
+</package>
