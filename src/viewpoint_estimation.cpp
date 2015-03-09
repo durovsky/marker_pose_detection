@@ -41,7 +41,7 @@ main(int argc, char *argv[])
   ros::init(argc, argv, "viewpoint_estimation");
   ros::NodeHandle nh;
 
-  ViewPoint_Estimator est(nh);
+  ViewPoint_Estimator est(&nh);
 
   image_transport::ImageTransport it(nh);
   image_transport::Subscriber sub = it.subscribe("/image_raw", 1, &ViewPoint_Estimator::image_callback, &est);

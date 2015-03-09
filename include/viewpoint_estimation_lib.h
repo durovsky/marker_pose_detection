@@ -41,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Pose2D.h>
-#include <std_msgs/Int16.h>
 #include <iostream>
 #include <fstream>
 
@@ -65,26 +64,7 @@ class ViewPoint_Estimator
 {
 public:
 
-    enum Pattern {NOT_EXISTING, CHESSBOARD, CIRCLES_GRID, MARKERS};
-
-    std::string filename;                            //calibration file path
-    cv::Mat *intrinsics;                             //camera intrinsics
-    cv::Mat *distortion_coeff;                       //camera distortion coeffs
-    cv::Size *image_size;                            //image_size
-    Pattern calibration_pattern;                     //type of calibration pattern
-
-    ros::Publisher pose3D_pub;			     //3D pose publisher
-    ros::Publisher pose2D_pub;                       //2D pose publisher
-    
-    //Chessboard parameters
-    cv::Size board_size;                             //widht and height of calibration grid
-    float square_size;                               //size of grid square
-
-    //Marker parameters
-    float marker_size;                               //marker geometry
-    aruco::CameraParameters aruco_calib_params;      //Camera parameters for aruco lib
-
-    ViewPoint_Estimator(ros::NodeHandle nh);
+    explicit ViewPoint_Estimator(ros::NodeHandle *nh);
     ~ViewPoint_Estimator();
     bool load_calibration_file(std::string filename);
     void image_callback(const sensor_msgs::ImageConstPtr &original_image);
@@ -96,12 +76,32 @@ public:
     
     
 private:
-    cv::Mat I;
+
+    cv::Mat I;                                       //OpeCV image
+
+    //Calibration parameters
+    std::string filename;                            //calibration file path
+    cv::Mat *intrinsics;                             //camera intrinsics
+    cv::Mat *distortion_coeff;                       //camera distortion coeffs
+    cv::Size *image_size;                            //image_size
+
+    //ROS messaging
+    ros::Publisher pose3D_pub;			             //3D pose publisher
+    ros::Publisher pose2D_pub;                       //2D pose publisher
+
+    //Chessboard detection variables
+    cv::Size board_size;                             //widht and height of calibration grid
+    float square_size;                               //size of grid square
+
     std::vector <cv::Point3f> chessboard3D_points;   //chessboard 3D points in own reference frame
     std::vector<cv::Point2f>  chessboard2D_points;   //chessboard 2D points in image
 
     std::vector <cv::Point3d> ref_frame_points;      //reference xyz frame points
     std::vector<cv::Point2d>  image_frame_points;     //reference xyz frame points in image
+
+    //Marker parameters
+    float marker_size;                               //marker geometry
+    aruco::CameraParameters aruco_calib_params;      //Camera parameters for aruco lib
 
 };
 

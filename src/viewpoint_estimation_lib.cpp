@@ -39,26 +39,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <viewpoint_estimation_lib.h>
 
-using namespace cv;
-using namespace std;
-
 namespace enc = sensor_msgs::image_encodings;
 
-ViewPoint_Estimator::ViewPoint_Estimator(ros::NodeHandle nh) :
+ViewPoint_Estimator::ViewPoint_Estimator(ros::NodeHandle *nh) :
     square_size(2.75),      //Chessboard square size
-    marker_size(10),        //Marker size in cm
+    marker_size(0.1),        //Marker size in cm
     filename("empty")       //Initial filename
 {
-    nh.getParam("/viewpoint_estimation/calibration_file", filename);
+    nh->getParam("/viewpoint_estimation/calibration_file", filename);
 
-    pose3D_pub = nh.advertise<geometry_msgs::Pose>("marker3D_pose", 1);
-    pose2D_pub = nh.advertise<geometry_msgs::Pose2D>("marker2D_pose",1);
+    pose3D_pub = nh->advertise<geometry_msgs::Pose>("marker3D_pose", 1);
+    pose2D_pub = nh->advertise<geometry_msgs::Pose2D>("marker2D_pose",1);
     
     load_calibration_file(filename);                //Load camera calibration data
     board_size.width = 9;                           //Set grid parameters
     board_size.height = 6;
-    marker_size = 10;                               //Initial marker size
-    namedWindow("RGB", CV_WINDOW_AUTOSIZE);
+    cv::namedWindow("RGB", CV_WINDOW_AUTOSIZE);
 
     //Generate chessboard 3D points for solvePnP
     for(int i = 0; i < board_size.height; ++i)
@@ -66,16 +62,18 @@ ViewPoint_Estimator::ViewPoint_Estimator(ros::NodeHandle nh) :
           chessboard3D_points.push_back(cv::Point3f(float(i*square_size), float(j*square_size), 0.f));
 
     //Generate reference frame points for chessboard detection
-    ref_frame_points.push_back( Point3d( 0.0,  0.0,  0.0 ) );
-    ref_frame_points.push_back( Point3d( 10.0, 0.0,  0.0 ) );
-    ref_frame_points.push_back( Point3d( 0.0,  10.0, 0.0 ) );
-    ref_frame_points.push_back( Point3d( 0.0,  0.0,  10.0) );
+    ref_frame_points.push_back( cv::Point3d( 0.0,  0.0,  0.0 ) );
+    ref_frame_points.push_back( cv::Point3d( 10.0, 0.0,  0.0 ) );
+    ref_frame_points.push_back( cv::Point3d( 0.0,  10.0, 0.0 ) );
+    ref_frame_points.push_back( cv::Point3d( 0.0,  0.0,  10.0) );
 
 }
 
 ViewPoint_Estimator::~ViewPoint_Estimator()
 {
-    delete this;
+    delete intrinsics;
+    delete distortion_coeff;
+    delete image_size;
 }
 
 void
@@ -101,21 +99,21 @@ ViewPoint_Estimator::image_callback(const sensor_msgs::ImageConstPtr &original_i
   //============================================
 
    imshow("RGB", I);
-   waitKey(10);
+   cv::waitKey(10);
 
 }
 
 bool
-ViewPoint_Estimator::chessboard_find_pattern(Mat input_image, Mat output_image)
+ViewPoint_Estimator::chessboard_find_pattern(cv::Mat input_image, cv::Mat output_image)
 {
   //Look for feature points in current image
-  bool found = cv::findChessboardCorners(input_image, board_size, chessboard2D_points, CALIB_CB_FAST_CHECK );
+  bool found = cv::findChessboardCorners(input_image, board_size, chessboard2D_points, cv::CALIB_CB_FAST_CHECK );
   //std::cout << "Chessboard detected: " << found << std::endl;
   if (found == true)
   {
       //Estimate chessboard pose
       cv::Mat rvec, tvec;
-      cv::solvePnP(Mat(chessboard3D_points), Mat(chessboard2D_points),*intrinsics, *distortion_coeff, rvec, tvec, false);
+      cv::solvePnP(cv::Mat(chessboard3D_points), cv::Mat(chessboard2D_points),*intrinsics, *distortion_coeff, rvec, tvec, false);
       std::cout << "Rvec: " << rvec << std::endl;
       std::cout << "Tvec: " << tvec << std::endl;
 
@@ -251,9 +249,9 @@ ViewPoint_Estimator::arucoMarker2Tf(const aruco::Marker &marker)
                               marker_rotation.at<float>(1,0), marker_rotation.at<float>(1,1), marker_rotation.at<float>(1,2),
                               marker_rotation.at<float>(2,0), marker_rotation.at<float>(2,1), marker_rotation.at<float>(2,2));
 
-  tf::Vector3 marker_tf_tran(marker_translation.at<float>(0,0)/100,
-                             marker_translation.at<float>(1,0)/100,
-                             marker_translation.at<float>(2,0)/100);
+  tf::Vector3 marker_tf_tran(marker_translation.at<float>(0,0),
+                             marker_translation.at<float>(1,0),
+                             marker_translation.at<float>(2,0));
 
   return tf::Transform(marker_tf_rot, marker_tf_tran);
 }
