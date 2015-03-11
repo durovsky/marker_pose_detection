@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <geometry_msgs/Pose2D.h>
 #include <iostream>
 #include <fstream>
+#include <visualization_msgs/Marker.h>
 
 //Aruco headers
 #include <aruco/aruco.h>
@@ -72,6 +73,8 @@ public:
     bool chessboard_find_pattern(cv::Mat input_image, cv::Mat output_image);
     bool markers_find_pattern(cv::Mat input_image, cv::Mat output_image);
   
+    void publish_marker(geometry_msgs::Pose marker_pose);
+
     tf::Transform arucoMarker2Tf(const aruco::Marker &marker);
     
     
@@ -88,6 +91,7 @@ private:
     //ROS messaging
     ros::Publisher pose3D_pub;			             //3D pose publisher
     ros::Publisher pose2D_pub;                       //2D pose publisher
+    ros::Publisher marker_pub;                       //box marker publisher
 
     //Chessboard detection variables
     cv::Size board_size;                             //widht and height of calibration grid
@@ -103,6 +107,9 @@ private:
     float marker_size;                               //marker geometry
     aruco::CameraParameters aruco_calib_params;      //Camera parameters for aruco lib
 
+    //TF frame
+    std::string camera_frame;                        //parrent camera frame name
+   
 };
 
 #endif //VIEWPOINT_ESTIMATOR_LIB_H
