@@ -190,6 +190,8 @@ ViewPoint_Estimator::markers_find_pattern(cv::Mat input_image,cv::Mat output_ima
     //Get marker pose
     tf::Transform object_transform = arucoMarker2Tf(markers[i]);
     
+    //Publish Current Marker TF
+    br.sendTransform(tf::StampedTransform(object_transform, ros::Time::now(), camera_frame, "marker"));
     //=================================================
     //Publish Current Marker geometry_msgs/Pose [6DOF]
     //=================================================
@@ -272,7 +274,7 @@ ViewPoint_Estimator::arucoMarker2Tf(const aruco::Marker &marker)
   marker_tf_rot.getRotation(marker_initial_quaternion);
 
   tf::Quaternion marker_swap_quaternion;
-  marker_swap_quaternion.setX(marker_initial_quaternion.getY());
+  marker_swap_quaternion.setX(-marker_initial_quaternion.getY());
   marker_swap_quaternion.setY(marker_initial_quaternion.getX());
   marker_swap_quaternion.setZ(marker_initial_quaternion.getZ());
   marker_swap_quaternion.setW(marker_initial_quaternion.getW());
@@ -313,7 +315,7 @@ void ViewPoint_Estimator::publish_marker(geometry_msgs::Pose marker_pose)
     marker.color.b = 0.0f;
     marker.color.a = 1.0;
 
-    marker.lifetime = ros::Duration(0.1);
+    marker.lifetime = ros::Duration(0.2);
 
     //Publish marker
     marker_pub.publish(marker);
