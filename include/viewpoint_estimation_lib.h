@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/PoseArray.h>
 #include <iostream>
 #include <fstream>
 #include <visualization_msgs/Marker.h>
@@ -73,7 +74,8 @@ public:
     bool chessboard_find_pattern(cv::Mat input_image, cv::Mat output_image);
     bool markers_find_pattern(cv::Mat input_image, cv::Mat output_image);
   
-    void publish_marker(geometry_msgs::Pose marker_pose);
+    void publish_marker(geometry_msgs::Pose marker_pose,const int marker_id);
+
 
     tf::Transform arucoMarker2Tf(const aruco::Marker &marker);
     
@@ -91,7 +93,8 @@ private:
     //ROS messaging
     ros::Publisher pose3D_pub;			             //3D pose publisher
     ros::Publisher pose2D_pub;                       //2D pose publisher
-    ros::Publisher marker_pub;                       //box marker publisher
+    ros::Publisher pose_array_pub;                   //multiple marker poses publisher
+    ros::Publisher marker_pub;                       //single marker pose publisher
 
     //Chessboard detection variables
     cv::Size board_size;                             //widht and height of calibration grid
