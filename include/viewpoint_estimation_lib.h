@@ -39,9 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //Standard ROS headers
 #include <sensor_msgs/image_encodings.h>
 #include <tf/transform_broadcaster.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Pose2D.h>
-#include <geometry_msgs/PoseArray.h>
+
 #include <iostream>
 #include <fstream>
 #include <visualization_msgs/Marker.h>
@@ -91,10 +89,7 @@ private:
     cv::Size *image_size;                            //image_size
 
     //ROS messaging
-    ros::Publisher pose3D_pub;			             //3D pose publisher
-    ros::Publisher pose2D_pub;                       //2D pose publisher
-    ros::Publisher pose_array_pub;                   //multiple marker poses publisher
-    ros::Publisher marker_pub;                       //single marker pose publisher
+    ros::Publisher marker_pub;                       //marker visualization
 
     //Chessboard detection variables
     cv::Size board_size;                             //widht and height of calibration grid
@@ -107,7 +102,7 @@ private:
     std::vector<cv::Point2d>  image_frame_points;     //reference xyz frame points in image
 
     //Marker parameters
-    float marker_size;                               //marker geometry
+    double marker_size;                               //marker geometry
     aruco::CameraParameters aruco_calib_params;      //Camera parameters for aruco lib
 
     //TF frame

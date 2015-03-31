@@ -43,17 +43,16 @@ namespace enc = sensor_msgs::image_encodings;
 
 ViewPoint_Estimator::ViewPoint_Estimator(ros::NodeHandle *nh) :
     square_size(2.75),       //Chessboard square size
-    marker_size(0.1),        //Marker size in cm
+    marker_size(0.1),        //Default Marker size in cm
     filename("empty"),       //Initial filename
     camera_frame("world")    //Initial camera frame
 {
     nh->getParam("/viewpoint_estimation/calibration_file", filename);
     nh->getParam("/viewpoint_estimation/camera_frame", camera_frame);
+    nh->getParam("/viewpoint_estimation/marker_size", marker_size);
 
-    pose3D_pub       = nh->advertise<geometry_msgs::Pose>("marker3D_pose", 1);
-    pose2D_pub       = nh->advertise<geometry_msgs::Pose2D>("marker2D_pose",1);
-    pose_array_pub   = nh->advertise<geometry_msgs::PoseArray>("marker_array", 1);
-    marker_pub       = nh->advertise<visualization_msgs::Marker>("Aruco_marker", 1);
+    //Marker Visualization with IK
+    marker_pub       = nh->advertise<visualization_msgs::Marker>("Estimated_marker", 1);
 
     load_calibration_file(filename);                //Load camera calibration data
     board_size.width = 9;                           //Set grid parameters
@@ -177,7 +176,6 @@ ViewPoint_Estimator::markers_find_pattern(cv::Mat input_image,cv::Mat output_ima
 {
   aruco::MarkerDetector MDetector;
   std::vector<aruco::Marker> markers;
-  geometry_msgs::PoseArray marker_pose_array;
   static tf::TransformBroadcaster br;
 
   MDetector.detect(input_image, markers, aruco_calib_params, marker_size);
@@ -190,7 +188,7 @@ ViewPoint_Estimator::markers_find_pattern(cv::Mat input_image,cv::Mat output_ima
     aruco::CvDrawingUtils::draw3dCube(output_image, markers[i], aruco_calib_params);
     aruco::CvDrawingUtils::draw3dAxis(output_image, markers[i], aruco_calib_params);
 
-    //Get marker pose
+    //Transform marker pose to TFformat
     tf::Transform object_transform = arucoMarker2Tf(markers[i]);
     
     //Marker ID to string
@@ -198,8 +196,9 @@ ViewPoint_Estimator::markers_find_pattern(cv::Mat input_image,cv::Mat output_ima
     marker_id_string << "marker_" << current_marker_id;
     //Publish Current Marker TF
     br.sendTransform(tf::StampedTransform(object_transform, ros::Time::now(), camera_frame, marker_id_string.str()));
+
     //=================================================
-    //Publish Current Marker geometry_msgs/Pose [6DOF]
+    //Publish Current Marker to RViz
     //=================================================
     geometry_msgs::Pose marker_pose_data;
     
@@ -213,40 +212,11 @@ ViewPoint_Estimator::markers_find_pattern(cv::Mat input_image,cv::Mat output_ima
     marker_pose_data.orientation.y = marker_quaternion.getY();
     marker_pose_data.orientation.z = marker_quaternion.getZ();
     marker_pose_data.orientation.w = marker_quaternion.getW();
-
-    pose3D_pub.publish(marker_pose_data);
-    //Save current marker pose to array for complete marker poses message
-    marker_pose_array.poses.push_back(marker_pose_data);
-
-    //======================================
-    //Publish marker pose in image [3DOF]
-    //======================================
-    cv::Point2f marker_centroid;
-    marker_centroid = markers[i].getCenter();
-    geometry_msgs::Pose2D marker_centroid_data;
-    marker_centroid_data.x = marker_centroid.x;
-    marker_centroid_data.y = marker_centroid.y;
-    
-    //Get yaw from quaternion
-    double roll, pitch, yaw;
-    tf::Matrix3x3(marker_quaternion).getRPY(roll, pitch, yaw);
-    marker_centroid_data.theta = yaw;
-
-    pose2D_pub.publish(marker_centroid_data);
-    //Publish Current Marker TF
-    br.sendTransform(tf::StampedTransform(object_transform, ros::Time::now(), camera_frame, "marker"));
-
-    //======================================
-    //Publish marker visualization to Rviz
-    //======================================
+ 
     publish_marker(marker_pose_data, current_marker_id);
 
   }
-  //Publish all detected markers in geometry_msgs PoseArray message
-  marker_pose_array.header.stamp = ros::Time::now();
-  marker_pose_array.header.frame_id = camera_frame;
-  pose_array_pub.publish(marker_pose_array);
-
+  
   //Display camera frame
   tf::Vector3 camera_translation(0,0,0);
   tf::Matrix3x3 camera_rotation(1,0,0,
@@ -291,8 +261,8 @@ ViewPoint_Estimator::arucoMarker2Tf(const aruco::Marker &marker)
   marker_tf_rot.getRotation(marker_initial_quaternion);
 
   tf::Quaternion marker_swap_quaternion;
-  marker_swap_quaternion.setX(-marker_initial_quaternion.getY());
-  marker_swap_quaternion.setY(marker_initial_quaternion.getX());
+  marker_swap_quaternion.setX(marker_initial_quaternion.getY());
+  marker_swap_quaternion.setY(-marker_initial_quaternion.getX());
   marker_swap_quaternion.setZ(marker_initial_quaternion.getZ());
   marker_swap_quaternion.setW(marker_initial_quaternion.getW());
 
@@ -301,7 +271,7 @@ ViewPoint_Estimator::arucoMarker2Tf(const aruco::Marker &marker)
   //Swap X,Y position
  tf::Vector3 marker_swap_pose;
 
- marker_swap_pose.setX(-marker_tf_tran.getY());
+ marker_swap_pose.setX(marker_tf_tran.getY());
  marker_swap_pose.setY(marker_tf_tran.getX());
  marker_swap_pose.setZ(marker_tf_tran.getZ());
 
@@ -323,8 +293,8 @@ void ViewPoint_Estimator::publish_marker(geometry_msgs::Pose marker_pose, int ma
     marker.action = visualization_msgs::Marker::ADD;
 
     marker.pose = marker_pose;
-    marker.scale.x = 0.15;
-    marker.scale.y = 0.15;
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.1;
     marker.scale.z = 0.01;
 
     marker.color.r = 0.0f;
@@ -332,7 +302,7 @@ void ViewPoint_Estimator::publish_marker(geometry_msgs::Pose marker_pose, int ma
     marker.color.b = 0.0f;
     marker.color.a = 1.0;
 
-    marker.lifetime = ros::Duration(0.2);
+    marker.lifetime = ros::Duration(0.1);
 
     //Publish marker
     marker_pub.publish(marker);
