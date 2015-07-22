@@ -23,18 +23,11 @@ SET(SOURCES ${PROJECT_SOURCE_DIR}/src/viewpoint_estimation.cpp
 SET(HEADERS ${PROJECT_SOURCE_DIR}/include/viewpoint_estimation_lib.h
             )
 
-add_service_files(FILES viewpoint_estimation_service.srv)
-generate_messages(DEPENDENCIES)
-            
 catkin_package(
   DEPENDS
   INCLUDE_DIRS
   CATKIN_DEPENDS roscpp 
   LIBRARIES
-  roscpp
-  cmake_modules
-  tf
-  aruco
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
