@@ -245,8 +245,6 @@ ViewPoint_Estimator::arucoMarker2Tf(const aruco::Marker &marker)
   rotate_to_ros.at<float>(2,1) = 1.0;
   rotate_to_ros.at<float>(2,2) = 0.0;
 
-  marker_rotation = marker_rotation * rotate_to_ros.t();
-
   //Origin solution
   tf::Matrix3x3 marker_tf_rot(marker_rotation.at<float>(0,0), marker_rotation.at<float>(0,1), marker_rotation.at<float>(0,2),
                               marker_rotation.at<float>(1,0), marker_rotation.at<float>(1,1), marker_rotation.at<float>(1,2),
@@ -255,29 +253,6 @@ ViewPoint_Estimator::arucoMarker2Tf(const aruco::Marker &marker)
   tf::Vector3 marker_tf_tran(marker_translation.at<float>(0,0),
                              marker_translation.at<float>(1,0),
                              marker_translation.at<float>(2,0));
-
-  //Swap X,Y axis rotation
-  tf::Quaternion marker_initial_quaternion;
-  marker_tf_rot.getRotation(marker_initial_quaternion);
-
-  tf::Quaternion marker_swap_quaternion;
-  marker_swap_quaternion.setX(marker_initial_quaternion.getY());
-  marker_swap_quaternion.setY(-marker_initial_quaternion.getX());
-  marker_swap_quaternion.setZ(marker_initial_quaternion.getZ());
-  marker_swap_quaternion.setW(marker_initial_quaternion.getW());
-
-  marker_tf_rot.setRotation(marker_swap_quaternion);
-
-  //Swap X,Y position
- tf::Vector3 marker_swap_pose;
-
- marker_swap_pose.setX(marker_tf_tran.getY());
- marker_swap_pose.setY(marker_tf_tran.getX());
- marker_swap_pose.setZ(marker_tf_tran.getZ());
-
- marker_tf_tran.setX(marker_swap_pose.getX());
- marker_tf_tran.setY(marker_swap_pose.getY());
- marker_tf_tran.setZ(marker_swap_pose.getZ());
 
  return tf::Transform(marker_tf_rot, marker_tf_tran);
 }
